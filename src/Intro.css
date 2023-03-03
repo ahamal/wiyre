@@ -1,0 +1,46 @@
+.intro-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+}
+
+.intro-overlay .board .heading {
+  font-size: 3em;
+}
+
+.intro-overlay .board {
+  position: absolute;
+  width: 450px;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #000000aa;
+  color: #ffffff;
+  padding: 20px 20px;
+  border-radius: 10px;
+}
+
+
+.intro-overlay .board .note {
+  padding: 20px 0 20px 0;
+  font-weight: bolder;
+  line-height: 2em;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 2em;
+}
+
+
+.intro-overlay .board button {
+  padding: 20px;
+  font-size: 1.4em;
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  background-color: #498f49;
+  color: #ffffff;
+  font-weight: bold;
+}
