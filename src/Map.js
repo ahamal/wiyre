@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { doc, updateDoc, deleteDoc, addDoc, onSnapshot, query, collection } from 'firebase/firestore';
 import { db } from './firebase';
+import './Map.css'
 
 class Map extends Component {
   constructor(props) {
@@ -8,6 +9,8 @@ class Map extends Component {
     this.collectionRef = collection(db, 'markers');
     this.mapMarkers = {};
     this.markers = {};
+    this.lines = [];
+    this.state = { fromId: null, toId: null, markerState: null }
   }
 
   componentDidMount() {
@@ -82,7 +85,7 @@ class Map extends Component {
   }
 
   handleMapClick = (e) => {
-    this.addNewMarker();
+    this.addNewMarker(e);
   }
 
   updateDoc = (id, data) => {
@@ -94,6 +97,14 @@ class Map extends Component {
   }
 
   handleMarkerClick = (id) => {
+    if (this.state.markerState === 'start') {
+      this.setState({ startId: id, markerState: null });
+      return;
+    }
+    if (this.state.markerState === 'end') {
+      this.setState({ endId: id, markerState: null });
+      return;
+    }
     this.showMarkerPopup(id);
   }
 
@@ -137,74 +148,97 @@ class Map extends Component {
   }
 
 
-  //   this.map.addListener('click', e => {
+  generatePath = () => {
+    if (!this.state.endId || !this.state.startId) {
+      return 
+    }
 
-  //     newMarker.addListener('click', () => {
-  //       const infoWindow = new window.google.maps.InfoWindow({
-  //         content: `
-  //           <div>
-  //             <h4>${newMarker.getTitle()}</h4>
-  //             <p>Latitude: ${newMarker.getPosition().lat()}</p>
-  //             <p>Longitude: ${newMarker.getPosition().lng()}</p>
-  //           </div>
-  //         `
-  //       });
-  //       infoWindow.open(this.map, newMarker);
-  //     });
-  //     // this.setState(prevState => ({
-  //     //   markers: [...prevState.markers, newMarker]
-  //     // }));
-  //   });
+    const
+      endMarker = this.state.endId && this.markers[this.state.endId],
+      startMarker = this.state.startId && this.markers[this.state.startId];
 
-  //   const markers = this.props.places.map(place => {
-  //     const marker = new window.google.maps.Marker({
-  //       position: { lat: place.lat, lng: place.lng },
-  //       map: this.map,
-  //       title: place.name,
-  //       draggable: true
-  //     });
-  //     marker.addListener('click', () => {
-  //       const infoWindow = new window.google.maps.InfoWindow({
-  //         content: `
-  //           <div>
-  //             <h4>${marker.getTitle()}</h4>
-  //             <p>Latitude: ${marker.getPosition().lat()}</p>
-  //             <p>Longitude: ${marker.getPosition().lng()}</p>
-  //           </div>
-  //         `
-  //       });
-  //       infoWindow.open(this.map, marker);
-  //     });
-  //     return marker;
-  //   });
-  //   // this.setState({ markers });
+    this.clearPath();
 
-  //   const lines = this.props.places.map((place, i) => {
-  //     if (i === this.props.places.length - 1) {
-  //       return null;
-  //     }
+    // Add lines connecting the markers
+    const
+      markers = Object.values(this.markers),
+      lines = markers.map((doc, i) => {
+        if (i === markers.length - 1) {
+          return null;
+        }
 
-  //     const line = new window.google.maps.Polyline({
-  //       path: [
-  //         { lat: place.lat, lng: place.lng },
-  //         { lat: this.props.places[i + 1].lat, lng: this.props.places[i + 1].lng }
-  //       ],
-  //       strokeColor: '#FF0000',
-  //       strokeOpacity: 1.0,
-  //       strokeWeight: 2,
-  //       map: this.map
-  //     });
-  //     return line;
-  //   });
-  //   this.setState({ lines });
-  // }
+        const line = new window.google.maps.Polyline({
+          path: [
+            { lat: doc.lat, lng: doc.lng },
+            { lat: markers[i + 1].lat, lng: markers[i + 1].lng }
+          ],
+          strokeColor: '#FF0000',
+          strokeOpacity: 1.0,
+          strokeWeight: 2,
+          map: this.map
+        });
+        return line;
+      });
+    this.lines = lines;
+  }
+
+  clearPath = () => {
+    this.lines.forEach(line => line.setMap(null));
+  }
 
 
   render() {
+    const
+      endMarker = this.state.endId && this.markers[this.state.endId],
+      startMarker = this.state.startId && this.markers[this.state.startId];
+
     return (
-      <div
-        ref="map"
-        style={{ height: '100%', width: '100%' }} />
+      <>
+        <div
+          ref="map"
+          style={{ height: '100%', width: '100%' }} />
+          
+        <div className="control">
+          <div>
+            Start
+            <br />
+            { this.state.markerState === 'start' && 'selecting' }
+
+            <br />
+            {startMarker && startMarker.title}
+
+            <br />
+            <button
+              onClick={_ => this.setState({ markerState: 'start' })}>
+              Select
+            </button>
+          </div>
+
+          <hr />
+
+          <div>
+            End
+            <br />
+            {endMarker && endMarker.title}
+
+            <br />
+            { this.state.markerState === 'end' && 'selecting' }
+
+            <br />
+            <button
+              onClick={_ => this.setState({ markerState: 'end' })}>
+              Select
+            </button>
+          </div>
+          <hr />
+
+          <div className="">
+            <button onClick={this.generatePath}>Generate</button>
+            <br />
+            <button onClick={this.clearPath}>Clear</button>
+          </div>
+        </div>
+      </>
     );
   }
 }
